@@ -1,0 +1,10 @@
+{
+    "name": "com.kunagisa.easyfsm",
+    "displayName": "EasyFSM",
+    "description": "简单实现的状态机",
+    "version": "1.0.0",
+    "author":{
+        "name": "零",
+        "email": "kunagisatomo@live.com"
+    }
+}
