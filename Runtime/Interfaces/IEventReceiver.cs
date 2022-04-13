@@ -9,8 +9,8 @@ namespace EasyFSM
     /// <summary>
     /// 状态事件接收接口
     /// </summary>
-    public interface IEventReceiver<TState, TEvent> where TState : IState<TState>
+    public interface IEventReceiver<TEvent>
     {
-        ITransition<TState> Receive(in TEvent @event);
+        void Receive(in TEvent @event);
     }
 }

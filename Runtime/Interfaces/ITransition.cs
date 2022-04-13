@@ -5,6 +5,6 @@
     /// </summary>
     public interface ITransition<TState> where TState : IState<TState>
     {
-        public void Excute(IChangeState<TState> context);
+        void Excute(IChangeState<TState> context);
     }
 }

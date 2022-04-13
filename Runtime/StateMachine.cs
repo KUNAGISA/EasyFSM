@@ -59,12 +59,12 @@ namespace EasyFSM
 
         public void SendEvent<T>() where T : new()
         {
-            (m_state as IEventReceiver<TState, T>)?.Receive(new T())?.Excute(this);
+            (m_state as IEventReceiver<T>)?.Receive(new T());
         }
 
         public void SendEvent<T>(in T @event)
         {
-            (m_state as IEventReceiver<TState, T>)?.Receive(@event)?.Excute(this);
+            (m_state as IEventReceiver<T>)?.Receive(@event);
         }
 
         void IStateMachine<TState>.TickStateMachine(in float delta)
@@ -72,7 +72,6 @@ namespace EasyFSM
             m_state?.TickState(in delta)?.Excute(this);
             OnTickStateMachine(in delta);
         }
-
         protected virtual void OnRegisterState(TState state) { }
 
         protected virtual void OnTickStateMachine(in float delta) { }

@@ -19,11 +19,7 @@ namespace EasyFSM
         /// </summary>
         public void RegisterTransition<T>() where T : class, ITransition<TState>, new()
         {
-            if (m_transitionMap.ContainsKey(typeof(T)))
-            {
-                throw new Exception("重复注册状态转换");
-            }
-            m_transitionMap.Add(typeof(T), new T());
+            RegisterTransition(new T());
         }
 
         /// <summary>
@@ -32,10 +28,6 @@ namespace EasyFSM
         /// <param name="transition">状态切换实例</param>
         public void RegisterTransition<T>(T transition) where T : class, ITransition<TState>
         {
-            if (m_transitionMap.ContainsKey(typeof(T)))
-            {
-                throw new Exception("重复注册状态转换");
-            }
             m_transitionMap.Add(typeof(T), transition);
         }
 
