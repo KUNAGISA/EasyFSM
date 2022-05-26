@@ -3,8 +3,8 @@
     /// <summary>
     /// 状态转换接口
     /// </summary>
-    public interface ITransition<TState> where TState : IState<TState>
+    public interface ITransition
     {
-        void Excute(IChangeState<TState> context);
+        void Excute(IChangeState context);
     }
 }

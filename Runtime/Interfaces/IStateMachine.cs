@@ -3,23 +3,23 @@
     /// <summary>
     /// 状态机接口
     /// </summary>
-    public interface IStateMachine<TState> : IChangeState<TState> where TState : IState<TState>
+    public interface IStateMachine : IChangeState
     {
         /// <summary>
         /// 当前状态实例
         /// </summary>
-        TState CurrState { get; }
+        IState CurrState { get; }
 
         /// <summary>
         /// 注册状态
         /// </summary>
-        void RegisterState<T>() where T : TState, new();
+        void RegisterState<T>() where T : IState, new();
 
         /// <summary>
         /// 注册状态
         /// </summary>
         /// <param name="state">状态实例</param>
-        void RegisterState<T>(T state) where T : TState;
+        void RegisterState<T>(T state) where T : IState;
 
         /// <summary>
         /// 每帧回调
