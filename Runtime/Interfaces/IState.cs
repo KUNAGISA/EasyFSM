@@ -6,6 +6,11 @@
     public interface IState
     {
         /// <summary>
+        /// 所有初始化数据完成后状态初始化
+        /// </summary>
+        void InitState();
+
+        /// <summary>
         /// 状态激活时每帧回调
         /// </summary>
         /// <param name="delta">时间差</param>

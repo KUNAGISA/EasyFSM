@@ -13,6 +13,8 @@ namespace EasyFSM
         /// </summary>
         private Dictionary<Type, ITransition> m_transitionMap = new Dictionary<Type, ITransition>();
 
+        void IState.InitState() => OnInitState();
+
         void IEnterState.EnterState() => OnEnterState();
 
         void IState.ExitState() => OnExitState();
@@ -50,6 +52,11 @@ namespace EasyFSM
         }
 
         /// <summary>
+        /// 初始化状态时回调
+        /// </summary>
+        protected abstract void OnInitState();
+
+        /// <summary>
         /// 进入状态时回调
         /// </summary>
         protected abstract void OnEnterState();
@@ -77,6 +84,8 @@ namespace EasyFSM
         /// 状态转换表
         /// </summary>
         private Dictionary<Type, ITransition> m_transitionMap = new Dictionary<Type, ITransition>();
+
+        void IState.InitState() => OnInitState();
 
         void IEnterState<TParam>.EnterState(in TParam param) => OnEnterState(in param);
 
@@ -113,6 +122,11 @@ namespace EasyFSM
             }
             return null;
         }
+
+        /// <summary>
+        /// 初始化状态时回调
+        /// </summary>
+        protected abstract void OnInitState();
 
         /// <summary>
         /// 进入状态时回调

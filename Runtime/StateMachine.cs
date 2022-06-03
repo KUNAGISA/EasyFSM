@@ -43,6 +43,7 @@ namespace EasyFSM
             }
 
             var state = new T();
+            state.InitState();
             m_stateMap.Add(typeof(T), state);
         }
 
@@ -52,6 +53,7 @@ namespace EasyFSM
             {
                 throw new Exception("重复添加状态");
             }
+            state.InitState();
             m_stateMap.Add(typeof(T), state);
         }
 
