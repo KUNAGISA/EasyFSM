@@ -8,7 +8,7 @@
         /// <summary>
         /// 当前状态实例
         /// </summary>
-        IState CurrState { get; }
+        IState currState { get; }
 
         /// <summary>
         /// 注册状态

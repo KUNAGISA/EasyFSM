@@ -8,30 +8,32 @@ namespace EasyFSM
     /// </summary>
     public class StateMachine : IStateMachine
     {
-        private IState m_state = default(IState);
+        private IState m_currState = null;
+        private ITransition m_waitExecuteTransition = null;
+
         private Dictionary<Type, IState> m_stateMap = new Dictionary<Type, IState>();
 
-        public IState CurrState => m_state;
+        public IState currState => m_currState;
 
         public void ChangeState<T>() where T : class, IEnterState, IState
         {
             /// 不带参数切状态的话相同状态不会切换
             if (m_stateMap.TryGetValue(typeof(T), out var newState))
             {
-                m_state?.ExitState();
-                m_state = newState;
-                (m_state as T).EnterState();
+                m_currState?.ExitState();
+                m_currState = newState;
+                (m_currState as T).EnterState();
             }
         }
 
         public void ChangeState<T, TParam>(in TParam param) where T : class, IEnterState<TParam>, IState
         {
             /// 带参数有可能参数不一样，所以需要重新切换
-            if (m_stateMap.TryGetValue(typeof(T), out var newState) && !newState.Equals(m_state))
+            if (m_stateMap.TryGetValue(typeof(T), out var newState) && !newState.Equals(m_currState))
             {
-                m_state?.ExitState();
-                m_state = newState;
-                (m_state as T).EnterState(in param);
+                m_currState?.ExitState();
+                m_currState = newState;
+                (m_currState as T).EnterState(in param);
             }
         }
 
@@ -59,17 +61,31 @@ namespace EasyFSM
 
         public void SendEvent<T>() where T : new()
         {
-            (m_state as IEventReceiver<T>)?.Receive(new T());
+            SwapWaitTransition((m_currState as IEventReceiver<T>)?.ReceiveEvent(new T()));
         }
 
         public void SendEvent<T>(in T @event)
         {
-            (m_state as IEventReceiver<T>)?.Receive(@event);
+            SwapWaitTransition((m_currState as IEventReceiver<T>)?.ReceiveEvent(@event));
         }
 
         void IStateMachine.TickStateMachine(in float delta)
         {
-            m_state?.TickState(in delta)?.Excute(this);
+            SwapWaitTransition(m_currState?.TickState(in delta));
+            m_waitExecuteTransition?.Excute(this);
+            m_waitExecuteTransition = null;
+        }
+
+        /// <summary>
+        /// 切换等待执行的状态切换
+        /// </summary>
+        /// <param name="transtion">切换目标</param>
+        private void SwapWaitTransition(ITransition transtion)
+        {   
+            if (transtion != null && (m_waitExecuteTransition == null || m_waitExecuteTransition.order <= transtion.order))
+            {
+                m_waitExecuteTransition = transtion;
+            }
         }
     }
 }

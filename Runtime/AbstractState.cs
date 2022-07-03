@@ -24,17 +24,20 @@ namespace EasyFSM
         /// <summary>
         /// 注册状态切换
         /// </summary>
-        public void RegisterTransition<T>() where T : class, ITransition, new()
+        /// <param name="order">优先级</param>
+        public void RegisterTransition<T>(int order = 0) where T : class, ITransition, new()
         {
-            RegisterTransition(new T());
+            RegisterTransition(new T(), order);
         }
 
         /// <summary>
         /// 注册状态切换
         /// </summary>
         /// <param name="transition">状态切换实例</param>
-        public void RegisterTransition<T>(T transition) where T : class, ITransition
+        /// <param name="order">优先级</param>
+        public void RegisterTransition<T>(T transition, int order = 0) where T : class, ITransition
         {
+            transition.order = order;
             m_transitionMap.Add(typeof(T), transition);
         }
 

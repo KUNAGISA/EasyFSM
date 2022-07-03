@@ -5,6 +5,8 @@
     /// </summary>
     public interface ITransition
     {
+        internal int order { get; set; }
+
         void Excute(IChangeState context);
     }
 }
