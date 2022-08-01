@@ -19,7 +19,7 @@ namespace EasyFSM
 
         void IState.ExitState() => OnExitState();
 
-        ITransition IState.TickState(in float delta) => OnTickState(in delta);
+        ITransition IState.TickState(float delta) => OnTickState(delta);
 
         /// <summary>
         /// 注册状态切换
@@ -74,7 +74,7 @@ namespace EasyFSM
         /// </summary>
         /// <param name="delta">间隔</param>
         /// <returns>状态切换</returns>
-        protected abstract ITransition OnTickState(in float delta);
+        protected abstract ITransition OnTickState(float delta);
     }
 
     /// <summary>
@@ -94,7 +94,7 @@ namespace EasyFSM
 
         void IState.ExitState() => OnExitState();
 
-        ITransition IState.TickState(in float delta) => OnTickState(in delta);
+        ITransition IState.TickState(float delta) => OnTickState(delta);
 
         /// <summary>
         /// 注册状态切换
@@ -146,6 +146,6 @@ namespace EasyFSM
         /// </summary>
         /// <param name="delta">间隔</param>
         /// <returns>状态切换</returns>
-        protected abstract ITransition OnTickState(in float delta);
+        protected abstract ITransition OnTickState(float delta);
     }
 }

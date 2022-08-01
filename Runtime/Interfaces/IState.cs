@@ -15,7 +15,7 @@
         /// </summary>
         /// <param name="delta">时间差</param>
         /// <returns>如果需要切换状态则返回状态转换实例</returns>
-        ITransition TickState(in float delta);
+        ITransition TickState(float delta);
 
         /// <summary>
         /// 离开状态回调

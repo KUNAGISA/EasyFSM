@@ -71,7 +71,7 @@ namespace EasyFSM
 
         void IStateMachine.TickStateMachine(in float delta)
         {
-            SwapWaitTransition(m_currState?.TickState(in delta));
+            SwapWaitTransition(m_currState?.TickState(delta));
             m_waitExecuteTransition?.Excute(this);
             m_waitExecuteTransition = null;
         }
