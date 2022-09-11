@@ -3,89 +3,109 @@ using System.Collections.Generic;
 
 namespace EasyFSM
 {
-    /// <summary>
-    /// 简易状态机
-    /// </summary>
-    public class StateMachine : IStateMachine
+    public struct SwitchStateScope : IDisposable
     {
-        private IState m_currState = null;
-        private ITransition m_waitExecuteTransition = null;
+        private Type m_type;
+        private IState m_state;
+        private IStateMachine m_stateMachine;
 
-        private Dictionary<Type, IState> m_stateMap = new Dictionary<Type, IState>();
-
-        public IState currState => m_currState;
-
-        public void ChangeState<T>() where T : class, IEnterState, IState
+        public SwitchStateScope(Type type, IState state, IStateMachine stateMachine)
         {
-            /// 不带参数切状态的话相同状态不会切换
-            if (m_stateMap.TryGetValue(typeof(T), out var newState))
-            {
-                m_currState?.ExitState();
-                m_currState = newState;
-                (m_currState as T).EnterState();
-            }
+            m_type = type; m_state = state; m_stateMachine = stateMachine; 
         }
 
-        public void ChangeState<T, TParam>(in TParam param) where T : class, IEnterState<TParam>, IState
+        void IDisposable.Dispose()
         {
-            /// 带参数有可能参数不一样，所以需要重新切换
-            if (m_stateMap.TryGetValue(typeof(T), out var newState) && !newState.Equals(m_currState))
-            {
-                m_currState?.ExitState();
-                m_currState = newState;
-                (m_currState as T).EnterState(in param);
-            }
+            m_stateMachine?.SetState(m_type, m_state);
+            m_stateMachine = null; m_state = null; m_type = null;
         }
+    }
 
-        public void RegisterState<T>() where T : IState, new()
-        {
-            if (m_stateMap.ContainsKey(typeof(T)))
-            {
-                throw new Exception("重复添加状态");
-            }
-
-            var state = new T();
-            state.InitState();
-            m_stateMap.Add(typeof(T), state);
-        }
-
-        public void RegisterState<T>(T state) where T : IState
-        {
-            if (m_stateMap.ContainsKey(typeof(T)))
-            {
-                throw new Exception("重复添加状态");
-            }
-            state.InitState();
-            m_stateMap.Add(typeof(T), state);
-        }
-
-        public void SendEvent<T>() where T : new()
-        {
-            SwapWaitTransition((m_currState as IEventReceiver<T>)?.ReceiveEvent(new T()));
-        }
-
-        public void SendEvent<T>(in T @event)
-        {
-            SwapWaitTransition((m_currState as IEventReceiver<T>)?.ReceiveEvent(@event));
-        }
-
-        void IStateMachine.TickStateMachine(in float delta)
-        {
-            SwapWaitTransition(m_currState?.TickState(delta));
-            m_waitExecuteTransition?.Excute(this);
-            m_waitExecuteTransition = null;
-        }
+    public interface IStateMachine
+    {
+        internal void SetState(Type type, IState state);
 
         /// <summary>
-        /// 切换等待执行的状态切换
+        /// 设置数据后切换状态
+        /// <code>
+        /// using (IStateMachine.SwitchState<State>(out var state))
+        /// {
+        ///     ///... init state param
+        /// }
+        /// </code>
         /// </summary>
-        /// <param name="transtion">切换目标</param>
-        private void SwapWaitTransition(ITransition transtion)
-        {   
-            if (transtion != null && (m_waitExecuteTransition == null || m_waitExecuteTransition.order <= transtion.order))
+        SwitchStateScope SwitchState<TState>(out TState state) where TState : IState;
+
+        /// <summary>
+        /// 切换状态
+        /// </summary>
+        void SwitchState<TState>() where TState : IState;
+
+        void Update(float deltaTime);
+    }
+
+    public class StateMachine : IStateMachine
+    {
+        private Dictionary<Type, IState> m_registerStateMap = new Dictionary<Type, IState>();
+        private Dictionary<Type, Action> m_bindTransitionMap = new Dictionary<Type, Action>();
+
+        private IState m_currState = null;
+        private Action m_transition = null;
+
+        public void Register<TState>(TState state, Action onTransitionDecide = null) where TState : IState
+        {
+            if (m_registerStateMap.TryGetValue(typeof(TState), out var old))
             {
-                m_waitExecuteTransition = transtion;
+                old.Destroy();
             }
+
+            m_registerStateMap[typeof(TState)] = state;
+
+            if (onTransitionDecide != null)
+            {
+                m_bindTransitionMap[typeof(TState)] = onTransitionDecide;
+            }
+
+            state.Init();
+        }
+
+        public SwitchStateScope SwitchState<TState>(out TState state) where TState : IState
+        {
+            var type = typeof(TState);
+            if (!m_registerStateMap.TryGetValue(type, out var newState))
+            {
+                throw new Exception($"not register state {type}");
+            }
+
+
+            state = (TState)newState;
+            return new SwitchStateScope(type, state, this);
+        }
+
+        public void SwitchState<TState>() where TState : IState
+        {
+            var type = typeof(TState);
+            if (!m_registerStateMap.TryGetValue(type, out var newState))
+            {
+                throw new Exception($"not register state {type}");
+            }
+            ((IStateMachine)this).SetState(type, newState);
+        }
+
+        public void Update(float deltaTime)
+        {
+            m_transition?.Invoke();
+            m_currState?.Update(deltaTime);
+        }
+
+        void IStateMachine.SetState(Type type, IState state)
+        {
+            m_transition = null;
+            m_bindTransitionMap.TryGetValue(type, out m_transition);
+
+            m_currState?.Exit();
+            m_currState = state;
+            m_currState.Enter();
         }
     }
 }
