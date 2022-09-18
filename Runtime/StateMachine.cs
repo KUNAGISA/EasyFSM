@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace EasyFSM
 {
-    public struct SwitchStateScope : IDisposable
+    public struct SwitchStateScope<TState> : IDisposable where TState : class, IState
     {
         private Type m_type;
         private IState m_state;
-        private IStateMachine m_stateMachine;
+        private IStateMachine<TState> m_stateMachine;
 
-        public SwitchStateScope(Type type, IState state, IStateMachine stateMachine)
+        public SwitchStateScope(Type type, IState state, IStateMachine<TState> stateMachine)
         {
             m_type = type; m_state = state; m_stateMachine = stateMachine; 
         }
@@ -21,7 +21,7 @@ namespace EasyFSM
         }
     }
 
-    public interface IStateMachine
+    public interface IStateMachine<TState> where TState : class, IState
     {
         internal void SetState(Type type, IState state);
 
@@ -34,42 +34,46 @@ namespace EasyFSM
         /// }
         /// </code>
         /// </summary>
-        SwitchStateScope SwitchState<TState>(out TState state) where TState : IState;
+        SwitchStateScope<TState> SwitchState<T>(out T state) where T : TState;
 
         /// <summary>
         /// 切换状态
         /// </summary>
-        void SwitchState<TState>() where TState : IState;
+        void SwitchState<T>() where T : TState;
 
         void Update(float deltaTime);
     }
 
-    public class StateMachine : IStateMachine
+    public class StateMachine<TState> : IStateMachine<TState> where TState : class, IState
     {
         private Dictionary<Type, IState> m_registerStateMap = new Dictionary<Type, IState>();
         private Dictionary<Type, Action> m_bindTransitionMap = new Dictionary<Type, Action>();
 
-        private IState m_currState = null;
+        private TState m_currState = null;
         private Action m_transition = null;
 
-        public void Register<TState>(TState state, Action onTransitionDecide = null) where TState : IState
+        public TState currState => m_currState;
+
+        public void Register<T>(T state, Action onTransitionDecide = null) where T : TState
         {
-            if (m_registerStateMap.TryGetValue(typeof(TState), out var old))
+            var type = typeof(T);
+            if (m_registerStateMap.TryGetValue(type, out var old))
             {
                 old.Destroy();
             }
 
-            m_registerStateMap[typeof(TState)] = state;
+            m_registerStateMap[type] = state;
+            OnInitState(state);
 
             if (onTransitionDecide != null)
             {
-                m_bindTransitionMap[typeof(TState)] = onTransitionDecide;
+                m_bindTransitionMap[type] = onTransitionDecide;
             }
 
             state.Init();
         }
 
-        public SwitchStateScope SwitchState<TState>(out TState state) where TState : IState
+        public SwitchStateScope<TState> SwitchState<T>(out T state) where T : TState
         {
             var type = typeof(TState);
             if (!m_registerStateMap.TryGetValue(type, out var newState))
@@ -77,35 +81,38 @@ namespace EasyFSM
                 throw new Exception($"not register state {type}");
             }
 
-
-            state = (TState)newState;
-            return new SwitchStateScope(type, state, this);
+            state = (T)newState;
+            return new SwitchStateScope<TState>(type, state, this);
         }
 
-        public void SwitchState<TState>() where TState : IState
+        public void SwitchState<T>() where T : TState
         {
-            var type = typeof(TState);
+            var type = typeof(T);
             if (!m_registerStateMap.TryGetValue(type, out var newState))
             {
                 throw new Exception($"not register state {type}");
             }
-            ((IStateMachine)this).SetState(type, newState);
+            SetState(type, newState);
         }
 
-        public void Update(float deltaTime)
+        public virtual void Update(float deltaTime)
         {
             m_transition?.Invoke();
             m_currState?.Update(deltaTime);
         }
 
-        void IStateMachine.SetState(Type type, IState state)
+        void IStateMachine<TState>.SetState(Type type, IState state) => SetState(type, state);
+
+        private void SetState(Type type, IState state)
         {
             m_transition = null;
             m_bindTransitionMap.TryGetValue(type, out m_transition);
 
             m_currState?.Exit();
-            m_currState = state;
+            m_currState = (TState)state;
             m_currState.Enter();
         }
+
+        protected virtual void OnInitState(TState state) { }
     }
 }
