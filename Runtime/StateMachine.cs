@@ -75,7 +75,7 @@ namespace EasyFSM
 
         public SwitchStateScope<TState> SwitchState<T>(out T state) where T : TState
         {
-            var type = typeof(TState);
+            var type = typeof(T);
             if (!m_registerStateMap.TryGetValue(type, out var newState))
             {
                 throw new Exception($"not register state {type}");
