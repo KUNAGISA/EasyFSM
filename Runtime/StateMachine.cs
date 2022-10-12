@@ -54,6 +54,11 @@ namespace EasyFSM
 
         public TState currState => m_currState;
 
+        public void Register<T>(Action onTransitionDecide = null) where T : TState, new()
+        {
+            Register(new T(), onTransitionDecide);
+        }
+
         public void Register<T>(T state, Action onTransitionDecide = null) where T : TState
         {
             var type = typeof(T);
@@ -71,6 +76,16 @@ namespace EasyFSM
             }
 
             state.Init();
+        }
+
+        public void Register<T>(Action<T> onTransitionDecide) where T : TState, new()
+        {
+            Register(new T(), onTransitionDecide);
+        }
+
+        public void Register<T>(T state, Action<T> onTransitionDecide) where T : TState
+        {
+            Register(state, () => onTransitionDecide(state));
         }
 
         public SwitchStateScope<TState> SwitchState<T>(out T state) where T : TState
@@ -97,8 +112,8 @@ namespace EasyFSM
 
         public virtual void Update(float deltaTime)
         {
-            m_transition?.Invoke();
             m_currState?.Update(deltaTime);
+            m_transition?.Invoke();
         }
 
         void IStateMachine<TState>.SetState(Type type, IState state) => SetState(type, state);
